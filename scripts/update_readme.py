@@ -15,7 +15,7 @@ import sys
 import urllib.request
 from urllib.error import HTTPError
 
-ORG = "Aswintechie"
+ORG = "Aswincloud"
 EXCLUDE = {".github"}
 
 MARKER_START = "<!-- REPOS_START -->"
