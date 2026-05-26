@@ -11,5 +11,6 @@
 | [ghadiff](https://github.com/Aswincloud/ghadiff) | – | Python |
 | [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | – | JavaScript |
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript |
+| [tg-torrent](https://github.com/Aswincloud/tg-torrent) | Telegram bot to remotely add torrents to qBittorrent via magnet links or .torrent files | Python |
 | [ttnn-web-calculator](https://github.com/Aswincloud/ttnn-web-calculator) | – | HTML |
 <!-- REPOS_END --> --- ## 📬 Contact For questions or contributions, open an issue in the relevant repository.
