@@ -36,7 +36,7 @@ CUSTOM_DESCRIPTIONS = {
     "3d_printing": "3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM",
     "AiBuddy": "AI-powered chatbot for Microsoft Teams — brings conversational AI into team channels and group chats",
     "whatsapp_bot": "WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use",
-    "cheap-domain": "Get custom subdomains under aswincloud.com for just ₹20/month",
+    "cheap-domain": "Get a custom subdomain under aswincloud.com for just ₹20/month",
 }
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
