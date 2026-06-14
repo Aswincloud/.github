@@ -2,6 +2,10 @@
 
 **Developer tooling · Performance profiling · Modern web applications**
 
+[![Website](https://img.shields.io/badge/Website-aswincloud.com-2ea44f?logo=googlechrome&logoColor=white)](https://aswincloud.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Aswincloud-181717?logo=github&logoColor=white)](https://github.com/Aswincloud)
+[![Made in India](https://img.shields.io/badge/Made%20in-India-FF9933?labelColor=138808&color=FF9933)](https://aswincloud.com)
+
 ---
 
 ## 🌟 Featured Projects
