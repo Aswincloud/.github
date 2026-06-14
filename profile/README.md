@@ -1,4 +1,12 @@
-# Aswincloud **Developer tooling · Performance profiling · Modern web applications** --- ## 🌟 Featured Projects <!-- REPOS_START -->
+# Aswincloud
+
+**Developer tooling · Performance profiling · Modern web applications**
+
+---
+
+## 🌟 Featured Projects
+
+<!-- REPOS_START -->
 | Repository | Description | Language |
 |------------|-------------|----------|
 | [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python |
@@ -15,4 +23,10 @@
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript |
 | [tg-torrent](https://github.com/Aswincloud/tg-torrent) | Telegram bot to remotely add torrents to qBittorrent via magnet links or .torrent files | Python |
 | [ttnn-web-calculator](https://github.com/Aswincloud/ttnn-web-calculator) | – | HTML |
-<!-- REPOS_END --> --- ## 📬 Contact For questions or contributions, open an issue in the relevant repository.
+<!-- REPOS_END -->
+
+---
+
+## 📬 Contact
+
+For questions or contributions, open an issue in the relevant repository.
