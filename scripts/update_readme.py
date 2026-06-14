@@ -95,8 +95,8 @@ def sort_repos(repos):
 def build_table(repos):
     """Build the Markdown table string for the given repos."""
     rows = [
-        "| Repository | Description | Language |",
-        "|------------|-------------|----------|",
+        "| Repository | Description | Language | ⭐ | Updated |",
+        "|------------|-------------|----------|:--:|:-------:|",
     ]
     for repo in repos:
         name = repo["name"]
@@ -105,9 +105,11 @@ def build_table(repos):
         desc = api_desc or CUSTOM_DESCRIPTIONS.get(name, "–")
         lang = repo.get("language") or "–"
         archived = repo.get("archived", False)
+        stars = repo.get("stargazers_count", 0)
+        updated = (repo.get("pushed_at") or "")[:10] or "–"
 
         name_cell = f"[{name}]({url}) *(archived)*" if archived else f"[{name}]({url})"
-        rows.append(f"| {name_cell} | {desc} | {lang} |")
+        rows.append(f"| {name_cell} | {desc} | {lang} | {stars} | {updated} |")
 
     return "\n".join(rows)
 
