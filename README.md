@@ -8,7 +8,7 @@ Welcome to **Aswincloud** – an organization focused on developer tooling, perf
 | Repository | Description | Language | ⭐ | Updated |
 |------------|-------------|----------|:--:|:-------:|
 | [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 2 | 2026-06-14 |
-| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-06-17 |
+| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-06-18 |
 | [portfolio](https://github.com/Aswincloud/portfolio) | Professional portfolio website built with React, Vite, and Tailwind CSS | JavaScript | 0 | 2026-06-14 |
 | [whatsapp_bot](https://github.com/Aswincloud/whatsapp_bot) | WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use | Python | 0 | 2026-06-15 |
 | [3d_printing](https://github.com/Aswincloud/3d_printing) | 3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM | HTML | 0 | 2026-06-14 |
