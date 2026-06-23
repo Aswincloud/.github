@@ -19,7 +19,7 @@ Welcome to **Aswincloud** – an organization focused on developer tooling, perf
 | [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-06-21 |
 | [shiptrack](https://github.com/Aswincloud/shiptrack) | Free, open-source, self-hostable shipment tracking for Indian & international couriers — built with Next.js + TypeScript | TypeScript | 1 | 2026-06-14 |
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript | 0 | 2025-07-15 |
-| [status-page](https://github.com/Aswincloud/status-page) | 🟢 Self-hosted, BetterStack-style live status page for a home network — Cloudflare Worker + D1 + a Docker prober, with email & Slack alerts. Runs on the free tier. | TypeScript | 0 | 2026-06-22 |
+| [status-page](https://github.com/Aswincloud/status-page) | 🟢 Self-hosted, BetterStack-style live status page for a home network — Cloudflare Worker + D1 + a Docker prober, with email & Slack alerts. Runs on the free tier. | TypeScript | 0 | 2026-06-23 |
 | [tg-torrent](https://github.com/Aswincloud/tg-torrent) | Telegram bot to remotely add torrents to qBittorrent via magnet links or .torrent files | Python | 0 | 2026-06-14 |
 | [ttnn-web-calculator](https://github.com/Aswincloud/ttnn-web-calculator) | Web app to test and visualize 150+ Tenstorrent TTNN operations in real time, with PyTorch comparison | HTML | 0 | 2026-06-14 |
 <!-- REPOS_END -->
