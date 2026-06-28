@@ -1,0 +1,33 @@
+name: Sync Security Triage Board
+
+# Mirrors every OPEN security alert (Dependabot, secret scanning, code scanning)
+# across the org onto the admin "Security Triage" project (#4) as draft issues,
+# tagged with Severity + Finding Type. Resolved alerts are moved to Done.
+# Admin-owned, automated — do not edit the board by hand.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # every 6 hours (security alerts are not high-frequency)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-security-triage
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Sync security triage board
+        env:
+          # PAT needs: project + repo + security_events (read org alerts,
+          # write org Projects v2). The default GITHUB_TOKEN cannot do this.
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: python3 scripts/sync_security_triage.py
