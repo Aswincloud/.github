@@ -1,0 +1,22 @@
+name: Auto-approve admin PRs (caller)
+
+# .github hosts the reusable auto-approve workflow (auto-approve.yml). This
+# separate caller lets .github's OWN pull requests use it too, like every other
+# repo — otherwise infra PRs here need a manual approval.
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions: {}
+
+concurrency:
+  group: auto-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  approve:
+    uses: Aswincloud/.github/.github/workflows/auto-approve.yml@main
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+      WRITE_ACCESS_PAT: ${{ secrets.WRITE_ACCESS_PAT }}
