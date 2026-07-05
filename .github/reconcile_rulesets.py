@@ -42,9 +42,9 @@ def desired_rules():
         {"type": "deletion"},
         {"type": "non_fast_forward"},
         {"type": "pull_request", "parameters": {
-            "required_approving_review_count": 0,
+            "required_approving_review_count": 1,
             "dismiss_stale_reviews_on_push": False,
-            "require_code_owner_review": False,
+            "require_code_owner_review": True,
             "require_last_push_approval": False,
             "required_review_thread_resolution": True,
         }},
