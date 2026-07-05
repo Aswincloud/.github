@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""Reconcile an 'org-baseline' branch ruleset across PUBLIC, ACTIVE repos.
+"""Reconcile org standards across PUBLIC, ACTIVE repos: baseline ruleset + the
+CODEOWNERS and auto-approve caller files.
 
-Floor-only baseline: block force-push + deletion, require a PR with all review
-threads resolved, 0 required approvals (a solo owner can still merge their own
-PR). GitHub applies EVERY matching ruleset, so this stacks with any richer
-per-repo ruleset (e.g. a 'main protection' ruleset carrying a merge queue +
-CODEOWNERS) — it only adds a floor and never removes rules. Proven on blog.
+Two baselines:
+  FLOOR       — block force-push + deletion, require PR + thread resolution,
+                0 approvals. Safe on any repo; can't deadlock a solo owner.
+  REVIEW      — FLOOR plus 1 approval + code-owner review. Only safe once the
+                repo has a working auto-approve caller (else the owner's own PR
+                can't be approved -> deadlock).
 
-DRY_RUN=true (default) reports what WOULD change and writes nothing.
-Skips: private (rulesets need Pro/Team), archived, forks, templates, empty.
+Deadlock-safe ordering per repo:
+  1. Ensure files (CODEOWNERS + caller). Writing needs the branch to accept a
+     commit, so if a repo is already at REVIEW but missing the caller, drop it
+     to FLOOR first, write, then raise.
+  2. Only apply REVIEW once BOTH files are confirmed present.
+A repo that can't get files (e.g. write perms missing) stays at FLOOR — never
+REVIEW — so it is always mergeable by its owner.
 
-Enforce mode needs the token to hold administration:write. If it doesn't yet
-(the Aswincloud Bot App has to be granted it in the App's settings), the write
-fails cleanly with a 'needs App administration:write' note rather than crashing.
+Writing files needs the token to hold contents:write + workflows:write. Without
+them the file step reports 'needs App contents/workflows:write' and the repo is
+held at FLOOR (not deadlocked).
+
+DRY_RUN=true (default) changes nothing.
 """
+import base64
 import json
 import os
 import subprocess
@@ -22,6 +32,12 @@ import sys
 ORG = os.environ.get("ORG", "Aswincloud")
 DRY_RUN = os.environ.get("DRY_RUN", "true").strip().lower() != "false"
 BASELINE = "org-baseline"
+SELF = ".github"  # this repo hosts templates + the reusable workflow
+
+CODEOWNERS_PATHS = [".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS"]
+CALLER_PATH = ".github/workflows/auto-approve.yml"
+TMPL_CODEOWNERS = ".github/templates/CODEOWNERS.tmpl"
+TMPL_CALLER = ".github/templates/auto-approve-caller.yml.tmpl"
 
 
 def gh(path, *extra, method=None, body=None):
@@ -32,60 +48,38 @@ def gh(path, *extra, method=None, body=None):
     args += list(extra)
     if body is not None:
         args += ["--input", "-"]
-    r = subprocess.run(args, capture_output=True, text=True,
-                       input=(json.dumps(body) if body is not None else None))
-    return r  # caller inspects returncode/stderr
+    return subprocess.run(args, capture_output=True, text=True,
+                          input=(json.dumps(body) if body is not None else None))
 
 
-def desired_rules():
-    return [
-        {"type": "deletion"},
-        {"type": "non_fast_forward"},
-        {"type": "pull_request", "parameters": {
-            "required_approving_review_count": 1,
-            "dismiss_stale_reviews_on_push": False,
-            "require_code_owner_review": True,
-            "require_last_push_approval": False,
-            "required_review_thread_resolution": True,
-        }},
-    ]
-
-
-def payload():
-    return {
-        "name": BASELINE,
-        "target": "branch",
-        "enforcement": "active",
-        "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
-        "rules": desired_rules(),
+def rules(review):
+    pr = {
+        "required_approving_review_count": 1 if review else 0,
+        "dismiss_stale_reviews_on_push": False,
+        "require_code_owner_review": bool(review),
+        "require_last_push_approval": False,
+        "required_review_thread_resolution": True,
     }
+    return [{"type": "deletion"}, {"type": "non_fast_forward"},
+            {"type": "pull_request", "parameters": pr}]
 
 
-# Fields we actually manage per rule type. GitHub injects extra defaults on
-# store (allowed_merge_methods, required_reviewers, nulls...), so we compare
-# ONLY our intent — otherwise the reconciler would "drift" forever and rewrite
-# every repo on every run.
-MANAGED = {
-    "deletion": [],
-    "non_fast_forward": [],
-    "pull_request": [
-        "required_approving_review_count",
-        "require_code_owner_review",
-        "required_review_thread_resolution",
-    ],
-}
+def payload(review):
+    return {"name": BASELINE, "target": "branch", "enforcement": "active",
+            "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+            "rules": rules(review)}
 
 
-def norm(rules):
-    by_type = {r["type"]: (r.get("parameters") or {}) for r in rules}
-    slim = {}
-    for rtype, keys in MANAGED.items():
-        if rtype not in by_type:
-            slim[rtype] = None  # a managed rule is missing -> drift
-            continue
-        params = by_type[rtype]
-        slim[rtype] = {k: params.get(k) for k in keys}
-    return json.dumps(slim, sort_keys=True)
+MANAGED = {"deletion": [], "non_fast_forward": [],
+           "pull_request": ["required_approving_review_count",
+                            "require_code_owner_review",
+                            "required_review_thread_resolution"]}
+
+
+def norm(rs):
+    by = {r["type"]: (r.get("parameters") or {}) for r in rs}
+    return json.dumps({t: ({k: by[t].get(k) for k in ks} if t in by else None)
+                       for t, ks in MANAGED.items()}, sort_keys=True)
 
 
 def skip_reason(repo):
@@ -98,7 +92,7 @@ def skip_reason(repo):
     if repo.get("is_template"):
         return "template"
     if not repo.get("default_branch"):
-        return "empty (no default branch)"
+        return "empty"
     return None
 
 
@@ -106,39 +100,95 @@ def find_baseline(repo):
     r = gh(f"repos/{ORG}/{repo}/rulesets")
     if r.returncode != 0:
         return None, r.stderr.strip()
-    for rs in json.loads(r.stdout or "[]"):
-        if rs.get("name") == BASELINE:
-            full = gh(f"repos/{ORG}/{repo}/rulesets/{rs['id']}")
-            return json.loads(full.stdout), None
+    for rs_ in json.loads(r.stdout or "[]"):
+        if rs_.get("name") == BASELINE:
+            return json.loads(gh(f"repos/{ORG}/{repo}/rulesets/{rs_['id']}").stdout), None
     return None, None
 
 
-def write(repo, cur):
+def set_baseline(repo, cur, review):
+    body = payload(review)
     if cur is None:
-        r = gh(f"repos/{ORG}/{repo}/rulesets", method="POST", body=payload())
+        r = gh(f"repos/{ORG}/{repo}/rulesets", method="POST", body=body)
     else:
-        r = gh(f"repos/{ORG}/{repo}/rulesets/{cur['id']}", method="PUT", body=payload())
+        r = gh(f"repos/{ORG}/{repo}/rulesets/{cur['id']}", method="PUT", body=body)
     if r.returncode == 0:
         return None
-    err = r.stderr
-    if "administration" in err.lower() or "resource not accessible" in err.lower() \
-            or "not accessible by integration" in err.lower():
+    e = r.stderr.lower()
+    if "administration" in e or "not accessible" in e:
         return "needs App administration:write"
-    return err.strip()[:70]
+    return r.stderr.strip()[:70]
+
+
+def has_file(repo, path, branch):
+    return gh(f"repos/{ORG}/{repo}/contents/{path}?ref={branch}").returncode == 0
+
+
+def read_template(path):
+    r = gh(f"repos/{ORG}/{SELF}/contents/{path}?ref=main")
+    if r.returncode != 0:
+        return None
+    return base64.b64decode(json.loads(r.stdout)["content"]).decode()
+
+
+def put_file(repo, path, content, branch, msg):
+    b64 = base64.b64encode(content.encode()).decode()
+    args = ["-f", f"message={msg}", "-f", f"content={b64}", "-f", f"branch={branch}"]
+    r = gh(f"repos/{ORG}/{repo}/contents/{path}", *args, method="PUT")
+    if r.returncode == 0:
+        return None
+    e = r.stderr.lower()
+    if "workflow" in e and "scope" in e or "refusing" in e or "not accessible" in e:
+        return "needs App contents/workflows:write"
+    if "rule violations" in e:
+        return "branch protected (floor not applied first?)"
+    return r.stderr.strip()[:70]
+
+
+def ensure_files(repo, branch, tmpl_co, tmpl_caller):
+    """Return (co_ok, caller_ok, note). Writes missing files to the default branch."""
+    co_ok = any(has_file(repo, p, branch) for p in CODEOWNERS_PATHS)
+    caller_ok = has_file(repo, CALLER_PATH, branch)
+    if repo == SELF:
+        # .github hosts the reusable definition at CALLER_PATH; its caller is a
+        # different filename. Treat its own files as managed elsewhere.
+        return co_ok, True, "self"
+    notes = []
+    if not co_ok and tmpl_co is not None:
+        if not DRY_RUN:
+            n = put_file(repo, ".github/CODEOWNERS", tmpl_co, branch, "chore: add CODEOWNERS (reconciler)")
+            if n:
+                notes.append(f"CODEOWNERS:{n}")
+            else:
+                co_ok = True
+        else:
+            notes.append("would add CODEOWNERS")
+    if not caller_ok and tmpl_caller is not None:
+        if not DRY_RUN:
+            n = put_file(repo, CALLER_PATH, tmpl_caller, branch, "ci: add auto-approve caller (reconciler)")
+            if n:
+                notes.append(f"caller:{n}")
+            else:
+                caller_ok = True
+        else:
+            notes.append("would add caller")
+    return co_ok, caller_ok, "; ".join(notes)
 
 
 def main():
     r = gh(f"orgs/{ORG}/repos", "--paginate", "--jq",
            ".[] | {name, private, archived, fork, is_template, default_branch}")
     if r.returncode != 0:
-        print(f"failed to list repos: {r.stderr}", file=sys.stderr)
+        print(f"repo list failed: {r.stderr}", file=sys.stderr)
         sys.exit(2)
     repos = sorted((json.loads(x) for x in r.stdout.splitlines() if x.strip()),
                    key=lambda x: x["name"])
+    tmpl_co = read_template(TMPL_CODEOWNERS)
+    tmpl_caller = read_template(TMPL_CALLER)
 
     rows = []
-    c = {"create": 0, "update": 0, "in_sync": 0, "skip": 0, "error": 0, "blocked": 0}
-    want = norm(desired_rules())
+    c = {"review": 0, "floor": 0, "in_sync": 0, "skip": 0, "blocked": 0, "error": 0}
+    want_review = norm(rules(True))
 
     for repo in repos:
         name = repo["name"]
@@ -147,42 +197,60 @@ def main():
             c["skip"] += 1
             rows.append((name, "skip", why))
             continue
+        branch = repo["default_branch"]
         cur, err = find_baseline(name)
         if err:
             c["error"] += 1
-            rows.append((name, "error", err[:60]))
+            rows.append((name, "error", err[:50]))
             continue
-        drifted = cur is not None and (
-            norm(cur.get("rules", [])) != want or cur.get("enforcement") != "active")
-        if cur is None or drifted:
-            act = "CREATE" if cur is None else "UPDATE"
-            note = "no org-baseline present" if cur is None else "drifted from baseline"
-            if not DRY_RUN:
-                problem = write(name, cur)
-                if problem:
-                    c["blocked"] += 1
-                    rows.append((name, "BLOCKED", problem))
-                    continue
-            c["create" if cur is None else "update"] += 1
-            rows.append((name, act, note))
+
+        # Step 1: ensure files. If repo is at REVIEW but a file is missing, the
+        # write could be blocked by protection — drop to FLOOR first.
+        co_ok = any(has_file(name, p, branch) for p in CODEOWNERS_PATHS)
+        caller_ok = has_file(name, CALLER_PATH, branch)
+        if (not co_ok or not caller_ok) and cur is not None:
+            curp = next((r for r in cur.get("rules", []) if r["type"] == "pull_request"), None)
+            if curp and curp["parameters"].get("required_approving_review_count", 0) > 0:
+                if not DRY_RUN:
+                    set_baseline(name, cur, review=False)  # drop to FLOOR to allow writes
+                    cur, _ = find_baseline(name)
+
+        co_ok, caller_ok, fnote = ensure_files(name, branch, tmpl_co, tmpl_caller)
+
+        # Step 2: choose target baseline by whether the auto-approver exists.
+        target_review = caller_ok and co_ok
+        problem = None
+        if cur is None or norm(cur.get("rules", [])) != norm(rules(target_review)) \
+                or cur.get("enforcement") != "active":
+            problem = set_baseline(name, cur, review=target_review)
+
+        if problem:
+            c["blocked"] += 1
+            rows.append((name, "BLOCKED", problem))
+        elif not target_review:
+            c["floor"] += 1
+            rows.append((name, "FLOOR", fnote or "no auto-approver yet -> floor only"))
         else:
-            c["in_sync"] += 1
-            rows.append((name, "in-sync", ""))
+            # is it already at review with files? classify sync vs changed
+            was_review = cur is not None and norm(cur.get("rules", [])) == want_review
+            noop = fnote in ("", "self")
+            if was_review and noop:
+                c["in_sync"] += 1
+                rows.append((name, "in-sync", ""))
+            else:
+                c["review"] += 1
+                rows.append((name, "REVIEW", fnote or "raised to require-review"))
 
     mode = "DRY-RUN (no changes)" if DRY_RUN else "ENFORCE"
-    out = [f"### org-baseline reconcile — {mode}", "",
-           "| repo | action | note |", "|---|---|---|"]
-    out += [f"| {n} | {a} | {note} |" for n, a, note in rows]
-    out += ["", f"**create={c['create']} update={c['update']} in-sync={c['in_sync']} "
+    out = [f"### org reconcile — {mode}", "", "| repo | action | note |", "|---|---|---|"]
+    out += [f"| {n} | {a} | {x} |" for n, a, x in rows]
+    out += ["", f"**review={c['review']} floor={c['floor']} in-sync={c['in_sync']} "
             f"skip={c['skip']} blocked={c['blocked']} error={c['error']}**"]
     report = "\n".join(out)
     print(report)
     summ = os.environ.get("GITHUB_STEP_SUMMARY")
     if summ:
-        with open(summ, "a", encoding="utf-8") as fh:
-            fh.write(report + "\n")
-    # Fail the run if anything genuinely errored OR was blocked on permissions,
-    # so enforce mode is visibly red until the App is granted admin:write.
+        open(summ, "a", encoding="utf-8").write(report + "\n")
     if c["error"] or c["blocked"]:
         sys.exit(1)
 
