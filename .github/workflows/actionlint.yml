@@ -1,0 +1,50 @@
+name: Lint workflows (actionlint)
+
+# Lints every workflow in this repo — the org's source-of-truth for reusable
+# workflows (e.g. auto-approve.yml). Runs on PRs and on direct pushes to main
+# (this repo is pushed to directly), so the reusable workflows are validated
+# before any caller repo consumes them.
+
+on:
+  pull_request:
+    paths: [".github/workflows/**"]
+  push:
+    branches: [main]
+    paths: [".github/workflows/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: actionlint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    env:
+      # Pinned actionlint release + the SHA256 I verified against the author's
+      # published checksums file. CI re-verifies on every run and aborts on any
+      # mismatch — no `curl | bash`, no trust-on-first-use.
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download + verify actionlint
+        run: |
+          set -euo pipefail
+          base="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}"
+          curl -fsSL -o actionlint.tar.gz "${base}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint --version
+
+      - name: Run actionlint
+        run: |
+          set -euo pipefail
+          # shellcheck IS installed on ubuntu-latest, so `run:` blocks get
+          # shell-linted too. -color for readable annotations.
+          ./actionlint -color
