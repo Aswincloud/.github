@@ -45,6 +45,6 @@ jobs:
       - name: Run actionlint
         run: |
           set -euo pipefail
-          # shellcheck IS installed on ubuntu-latest, so `run:` blocks get
-          # shell-linted too. -color for readable annotations.
+          # Note: ubuntu-latest ships shellcheck, so actionlint shell-lints the
+          # `run:` blocks too. -color for readable annotations.
           ./actionlint -color
