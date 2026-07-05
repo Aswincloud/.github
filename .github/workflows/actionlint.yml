@@ -6,11 +6,9 @@ name: Lint workflows (actionlint)
 # before any caller repo consumes them.
 
 on:
-  pull_request:
-    paths: [".github/workflows/**"]
+  pull_request: {}
   push:
     branches: [main]
-    paths: [".github/workflows/**"]
   workflow_dispatch:
 
 permissions:
