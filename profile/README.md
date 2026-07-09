@@ -35,6 +35,23 @@
 
 ---
 
+## ⚙️ Engineering practices
+
+This organization is run to professional standards — every repository is governed automatically, with policy defined once and continuously reconciled.
+
+[![Governance](https://img.shields.io/badge/Governance-100%25%20automated-2f6feb)](https://github.com/Aswincloud/.github)
+[![Policy](https://img.shields.io/badge/Policy-self--healing-1a7f4b)](https://github.com/Aswincloud/.github)
+[![CI](https://img.shields.io/badge/Workflows-actionlint%20gated-6b4fbb?logo=githubactions&logoColor=white)](https://github.com/Aswincloud/.github)
+[![Edge](https://img.shields.io/badge/Deploy-Cloudflare%20edge-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+
+- **Uniform governance** — every public repository shares one policy baseline: required reviews, code-owner review, protected branches, and resolved conversations before merge.
+- **Self-healing** — a scheduled reconciler keeps every repository in policy and brings new repositories into compliance automatically, so nothing drifts.
+- **Single source of truth** — shared, reusable workflows are defined once in [`.github`](https://github.com/Aswincloud/.github) and consumed everywhere; no duplication.
+- **Quality-gated CI** — workflows are linted and pinned before they merge; automation runs least-privilege.
+- **Serverless & edge-native** — projects deploy to Cloudflare Workers & Pages with D1, KV, and Durable Objects, globally distributed and running within free-tier limits.
+
+---
+
 ## 📬 Contact
 
 For questions or contributions, open an issue in the relevant repository.
