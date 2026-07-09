@@ -48,7 +48,7 @@ This organization is run to professional standards — every repository is gover
 - **Self-healing** — a scheduled reconciler keeps every repository in policy and brings new repositories into compliance automatically, so nothing drifts.
 - **Single source of truth** — shared, reusable workflows are defined once in [`.github`](https://github.com/Aswincloud/.github) and consumed everywhere; no duplication.
 - **Quality-gated CI** — workflows are linted and pinned before they merge; automation runs least-privilege.
-- **Serverless & edge-native** — projects deploy to Cloudflare Workers &amp; Pages with D1, KV, and Durable Objects, globally distributed and running within free-tier limits.
+- **Serverless & edge-native** — projects deploy to Cloudflare Workers & Pages with D1, KV, and Durable Objects, globally distributed and running within free-tier limits.
 
 ---
 
