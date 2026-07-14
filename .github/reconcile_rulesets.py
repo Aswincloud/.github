@@ -60,8 +60,19 @@ def rules(review):
         "require_last_push_approval": False,
         "required_review_thread_resolution": True,
     }
+    mq = {
+        "check_response_timeout_minutes": 60,
+        "grouping_strategy": "ALLGREEN",
+        "max_entries_to_build": 5,
+        "max_entries_to_merge": 5,
+        "merge_method": "SQUASH",
+        "min_entries_to_merge": 1,
+        # Solo org: don't wait to batch entries — a lone PR merges immediately.
+        "min_entries_to_merge_wait_minutes": 0,
+    }
     return [{"type": "deletion"}, {"type": "non_fast_forward"},
-            {"type": "pull_request", "parameters": pr}]
+            {"type": "pull_request", "parameters": pr},
+            {"type": "merge_queue", "parameters": mq}]
 
 
 def payload(review):
@@ -73,7 +84,10 @@ def payload(review):
 MANAGED = {"deletion": [], "non_fast_forward": [],
            "pull_request": ["required_approving_review_count",
                             "require_code_owner_review",
-                            "required_review_thread_resolution"]}
+                            "required_review_thread_resolution"],
+           "merge_queue": ["merge_method", "grouping_strategy",
+                           "min_entries_to_merge",
+                           "min_entries_to_merge_wait_minutes"]}
 
 
 def norm(rs):
