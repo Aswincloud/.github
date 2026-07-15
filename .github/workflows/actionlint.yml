@@ -9,6 +9,8 @@ on:
   pull_request: {}
   push:
     branches: [main]
+  merge_group: {}          # required: run in the merge queue so the required
+                           # "actionlint" check is satisfied on the queued commit
   workflow_dispatch:
 
 permissions:
