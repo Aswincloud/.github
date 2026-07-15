@@ -167,6 +167,24 @@ def put_file(repo, path, content, branch, msg):
     return r.stderr.strip()[:70]
 
 
+def ensure_repo_settings(repo):
+    """Idempotently enable allow_auto_merge so PRs can use the merge queue /
+    'Merge when ready'. Returns a short note if it changed something, else ''."""
+    r = gh(f"repos/{ORG}/{repo}")
+    if r.returncode != 0:
+        return ""
+    try:
+        cur = json.loads(r.stdout).get("allow_auto_merge")
+    except Exception:
+        cur = None
+    if cur is True:
+        return ""
+    if DRY_RUN:
+        return "would enable auto-merge"
+    w = gh(f"repos/{ORG}/{repo}", "-F", "allow_auto_merge=true", method="PATCH")
+    return "auto-merge on" if w.returncode == 0 else "auto-merge FAILED"
+
+
 def ensure_files(repo, branch, tmpl_co, tmpl_caller):
     """Return (co_ok, caller_ok, note). Writes missing files to the default branch."""
     co_ok = any(has_file(repo, p, branch) for p in CODEOWNERS_PATHS)
@@ -220,6 +238,7 @@ def main():
             rows.append((name, "skip", why))
             continue
         branch = repo["default_branch"]
+        set_note = ensure_repo_settings(name)  # enable allow_auto_merge (idempotent)
         cur, err = find_baseline(name)
         if err:
             c["error"] += 1
@@ -238,6 +257,8 @@ def main():
                     cur, _ = find_baseline(name)
 
         co_ok, caller_ok, fnote = ensure_files(name, branch, tmpl_co, tmpl_caller)
+        if set_note:  # surface an auto-merge settings change in the report note
+            fnote = f"{fnote}; {set_note}".strip("; ") if fnote else set_note
 
         # Step 2: choose target baseline by whether the auto-approver exists.
         target_review = caller_ok and co_ok
