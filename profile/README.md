@@ -24,8 +24,8 @@
 | [chat](https://github.com/Aswincloud/chat) | Full-viewport iframe wrapper hosting the self-hosted Chatwoot widget at chat.aswincloud.com | HTML | 0 | 2026-07-05 |
 | [cheap-domain](https://github.com/Aswincloud/cheap-domain) | Get a custom subdomain under aswincloud.com for just ₹20/month | – | 0 | 2026-07-05 |
 | [ghadiff](https://github.com/Aswincloud/ghadiff) | Python CLI to compare two GitHub Actions workflow runs — timing, status, and job/step-level diffs with text, JSON, Markdown, and HTML output | Python | 0 | 2026-07-05 |
-| [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-07-05 |
-| [resume](https://github.com/Aswincloud/resume) | Aswin — Software Engineer. Resume built from HTML/CSS, auto-rendered to PDF. | HTML | 0 | 2026-07-14 |
+| [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-07-15 |
+| [resume](https://github.com/Aswincloud/resume) | Aswin — Software Engineer. Resume built from HTML/CSS, auto-rendered to PDF. | HTML | 0 | 2026-07-15 |
 | [shiptrack](https://github.com/Aswincloud/shiptrack) | Free, open-source, self-hostable shipment tracking for Indian & international couriers — built with Next.js + TypeScript | TypeScript | 1 | 2026-07-05 |
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript | 0 | 2025-07-15 |
 | [status-page](https://github.com/Aswincloud/status-page) | 🟢 Self-hosted, BetterStack-style live status page for a home network — Cloudflare Worker + D1 + a Docker prober, with email & Slack alerts. Runs on the free tier. | TypeScript | 0 | 2026-07-05 |
