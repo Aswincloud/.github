@@ -78,6 +78,11 @@ def rules(review):
 def payload(review):
     return {"name": BASELINE, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+            # Break-glass: org admins can bypass (direct/admin-merge) so a
+            # misconfigured required check + merge queue can never permanently
+            # lock a repo. Managed here so the weekly PUT preserves it.
+            "bypass_actors": [{"actor_id": 1, "actor_type": "OrganizationAdmin",
+                               "bypass_mode": "always"}],
             "rules": rules(review)}
 
 
@@ -90,10 +95,13 @@ MANAGED = {"deletion": [], "non_fast_forward": [],
                            "min_entries_to_merge_wait_minutes"]}
 
 
-def norm(rs):
+def norm(rs, bypass=None):
     by = {r["type"]: (r.get("parameters") or {}) for r in rs}
-    return json.dumps({t: ({k: by[t].get(k) for k in ks} if t in by else None)
-                       for t, ks in MANAGED.items()}, sort_keys=True)
+    has_admin_bypass = any((b.get("actor_type") == "OrganizationAdmin")
+                           for b in (bypass or []))
+    return json.dumps({"rules": {t: ({k: by[t].get(k) for k in ks} if t in by else None)
+                                 for t, ks in MANAGED.items()},
+                       "admin_bypass": has_admin_bypass}, sort_keys=True)
 
 
 def skip_reason(repo):
@@ -202,7 +210,7 @@ def main():
 
     rows = []
     c = {"review": 0, "floor": 0, "in_sync": 0, "skip": 0, "blocked": 0, "error": 0}
-    want_review = norm(rules(True))
+    want_review = norm(rules(True), [{"actor_type": "OrganizationAdmin"}])
 
     for repo in repos:
         name = repo["name"]
@@ -234,7 +242,7 @@ def main():
         # Step 2: choose target baseline by whether the auto-approver exists.
         target_review = caller_ok and co_ok
         problem = None
-        if cur is None or norm(cur.get("rules", [])) != norm(rules(target_review)) \
+        if cur is None or norm(cur.get("rules", []), cur.get("bypass_actors")) != norm(rules(target_review), [{"actor_type": "OrganizationAdmin"}]) \
                 or cur.get("enforcement") != "active":
             problem = set_baseline(name, cur, review=target_review)
 
@@ -246,7 +254,7 @@ def main():
             rows.append((name, "FLOOR", fnote or "no auto-approver yet -> floor only"))
         else:
             # is it already at review with files? classify sync vs changed
-            was_review = cur is not None and norm(cur.get("rules", [])) == want_review
+            was_review = cur is not None and norm(cur.get("rules", []), cur.get("bypass_actors")) == want_review
             noop = fnote in ("", "self")
             if was_review and noop:
                 c["in_sync"] += 1
