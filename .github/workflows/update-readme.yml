@@ -72,5 +72,8 @@ jobs:
           GH_TOKEN="${APPROVE_TOKEN}" gh pr review "$PR_NUM" --repo "$REPO" --approve \
             --body "Auto-approved: automated README update."
 
-          gh pr merge "$PR_NUM" --repo "$REPO" --squash --auto --delete-branch
+          # Repo has a merge queue: the queue applies its own merge method
+          # (SQUASH) and deletes the branch. --squash/--delete-branch are
+          # rejected under a queue, so --auto alone enqueues the PR.
+          gh pr merge "$PR_NUM" --repo "$REPO" --auto
           echo "Auto-merge enabled on PR #${PR_NUM}."
