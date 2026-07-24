@@ -13,8 +13,8 @@
 <!-- REPOS_START -->
 | Repository | Description | Language | ⭐ | Updated |
 |------------|-------------|----------|:--:|:-------:|
-| [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 3 | 2026-07-22 |
-| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-07-22 |
+| [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 3 | 2026-07-23 |
+| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-07-24 |
 | [portfolio](https://github.com/Aswincloud/portfolio) | Professional portfolio website built with React, Vite, and Tailwind CSS | JavaScript | 1 | 2026-07-21 |
 | [whatsapp_bot](https://github.com/Aswincloud/whatsapp_bot) | WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use | Python | 0 | 2026-07-20 |
 | [3d_printing](https://github.com/Aswincloud/3d_printing) | 3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM | HTML | 0 | 2026-07-05 |
@@ -31,7 +31,7 @@
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript | 0 | 2025-07-15 |
 | [status-page](https://github.com/Aswincloud/status-page) | 🟢 Self-hosted, BetterStack-style live status page for a home network — Cloudflare Worker + D1 + a Docker prober, with email & Slack alerts. Runs on the free tier. | TypeScript | 0 | 2026-07-05 |
 | [tg-torrent](https://github.com/Aswincloud/tg-torrent) | Telegram bot to remotely add torrents to qBittorrent via magnet links or .torrent files | Python | 0 | 2026-07-05 |
-| [ttnn-ops-coverage](https://github.com/Aswincloud/ttnn-ops-coverage) | Interactive zero-dependency dashboard for the TTNN (Tenstorrent) op test matrix — every op across dtype × layout × memory, with per-config PCC/ULP accuracy and run-to-run diffs. Deploys to Cloudflare Workers. | JavaScript | 0 | 2026-07-23 |
+| [ttnn-ops-coverage](https://github.com/Aswincloud/ttnn-ops-coverage) | Interactive zero-dependency dashboard for the TTNN (Tenstorrent) op test matrix — every op across dtype × layout × memory, with per-config PCC/ULP accuracy and run-to-run diffs. Deploys to Cloudflare Workers. | JavaScript | 0 | 2026-07-24 |
 | [ttnn-web-calculator](https://github.com/Aswincloud/ttnn-web-calculator) | Web app to test and visualize 150+ Tenstorrent TTNN operations in real time, with PyTorch comparison | HTML | 0 | 2026-07-05 |
 | [word-game-bot](https://github.com/Aswincloud/word-game-bot) | Telegram word chain game bot (aiogram v3). Fork of jonowo/on9wordchainbot with DB-backed admin & group authorization. | Python | 0 | 2026-07-20 |
 <!-- REPOS_END -->
