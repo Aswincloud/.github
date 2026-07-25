@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/Aswincloud/.github/security/policy
+    about: Please report security issues privately — do not open a public issue. See our Security Policy.
+  - name: 💬 Questions & discussion
+    url: https://github.com/orgs/Aswincloud/discussions
+    about: For general questions, ideas, and help, please start a discussion.
