@@ -7,20 +7,20 @@ Welcome to **Aswincloud** – an organization focused on developer tooling, perf
 <!-- REPOS_START -->
 | Repository | Description | Language | ⭐ | Updated |
 |------------|-------------|----------|:--:|:-------:|
-| [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 3 | 2026-07-23 |
-| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-07-25 |
+| [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 3 | 2026-07-26 |
+| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-07-26 |
 | [portfolio](https://github.com/Aswincloud/portfolio) | Professional portfolio website built with React, Vite, and Tailwind CSS | JavaScript | 1 | 2026-07-21 |
-| [whatsapp_bot](https://github.com/Aswincloud/whatsapp_bot) | WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use | Python | 0 | 2026-07-20 |
+| [whatsapp_bot](https://github.com/Aswincloud/whatsapp_bot) | WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use | Python | 0 | 2026-07-27 |
 | [3d_printing](https://github.com/Aswincloud/3d_printing) | 3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM | HTML | 0 | 2026-07-25 |
-| [AiBuddy](https://github.com/Aswincloud/AiBuddy) | AI-powered chatbot for Microsoft Teams — brings conversational AI into team channels and group chats | Python | 0 | 2026-07-05 |
+| [AiBuddy](https://github.com/Aswincloud/AiBuddy) | AI-powered chatbot for Microsoft Teams — brings conversational AI into team channels and group chats | Python | 0 | 2026-07-26 |
 | [auth](https://github.com/Aswincloud/auth) | Shared, framework-agnostic auth primitives for Cloudflare Workers sites — signed sessions, HMAC tokens, PBKDF2 passwords, owner allowlists, OAuth — plus an optional React login UI. Published as @aswincloud/auth. | TypeScript | 0 | 2026-07-25 |
 | [blog](https://github.com/Aswincloud/blog) | blog.aswincloud.com - homelab & home automation | CSS | 0 | 2026-07-25 |
 | [chat](https://github.com/Aswincloud/chat) | Full-viewport iframe wrapper hosting the self-hosted Chatwoot widget at chat.aswincloud.com | HTML | 0 | 2026-07-25 |
 | [cheap-domain](https://github.com/Aswincloud/cheap-domain) *(archived)* | Get a custom subdomain under aswincloud.com for just ₹20/month | – | 0 | 2026-07-25 |
 | [gh-org-guard](https://github.com/Aswincloud/gh-org-guard) | Self-healing GitHub org governance: reconcile branch protection, merge queue, reviews & secret-hygiene across every repo — one weekly workflow. Reference implementation. | Python | 1 | 2026-07-25 |
-| [ghadiff](https://github.com/Aswincloud/ghadiff) | Python CLI to compare two GitHub Actions workflow runs — timing, status, and job/step-level diffs with text, JSON, Markdown, and HTML output | Python | 0 | 2026-07-05 |
+| [ghadiff](https://github.com/Aswincloud/ghadiff) | Python CLI to compare two GitHub Actions workflow runs — timing, status, and job/step-level diffs with text, JSON, Markdown, and HTML output | Python | 0 | 2026-07-26 |
 | [invoicer](https://github.com/Aswincloud/invoicer) | Create, preview, download and email professional invoices. Cloudflare Pages + Functions + D1. | JavaScript | 0 | 2026-07-25 |
-| [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-07-19 |
+| [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-07-26 |
 | [resume](https://github.com/Aswincloud/resume) | Aswin — Software Engineer. Resume built from HTML/CSS, auto-rendered to PDF. | HTML | 0 | 2026-07-15 |
 | [shiptrack](https://github.com/Aswincloud/shiptrack) | Free, open-source, self-hostable shipment tracking for Indian & international couriers — built with Next.js + TypeScript | TypeScript | 1 | 2026-07-05 |
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript | 0 | 2025-07-15 |
