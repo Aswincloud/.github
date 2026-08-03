@@ -19,6 +19,13 @@ because not every healthy site returns 200: console.aswincloud.com sits behind
 Cloudflare Access and answers 302 to its login page. Redirects are deliberately
 NOT followed, or that 302 would be invisible.
 
+Access-gated sites also support `redirect_to`, a substring the Location header
+must contain when the answer IS a redirect. Without it, "expect 302" passes on
+ANY redirect — including a misconfigured one pointing somewhere else entirely.
+Read the caveat on `redirect_to` in sites.json before trusting a gated site's
+green tick: Access answers at Cloudflare's edge, so a gated probe proves the
+edge is up, NOT that the origin behind it is.
+
 A site is only declared down after PROBE_ATTEMPTS failures — one TCP reset
 should not wake anybody up.
 
@@ -73,21 +80,25 @@ OPENER = urllib.request.build_opener(NoRedirect)
 
 
 def probe_once(url):
-    """Return (status_code, body_prefix, ms). Raises on connection failure."""
+    """Return (status_code, body_prefix, location, ms). Raises on conn failure."""
     req = urllib.request.Request(url, headers={"User-Agent": UA}, method="GET")
     t0 = time.monotonic()
     try:
         with OPENER.open(req, timeout=TIMEOUT) as r:
             body = r.read(65536).decode("utf-8", "replace")
-            return r.status, body, int((time.monotonic() - t0) * 1000)
+            loc = r.headers.get("Location", "")
+            return r.status, body, loc, int((time.monotonic() - t0) * 1000)
     except urllib.error.HTTPError as e:
         # A 4xx/5xx is a RESULT, not a crash — read it and let the caller judge.
+        # NoRedirect turns suppressed 3xx into HTTPError too, so the Location
+        # header is read here as well, not just on the success path.
         body = ""
         try:
             body = e.read(65536).decode("utf-8", "replace")
         except OSError:
             pass
-        return e.code, body, int((time.monotonic() - t0) * 1000)
+        loc = e.headers.get("Location", "") if e.headers else ""
+        return e.code, body, loc, int((time.monotonic() - t0) * 1000)
 
 
 def probe(site):
@@ -95,16 +106,25 @@ def probe(site):
     url = site["url"]
     expect = site.get("expect") or [200]
     needle = site.get("contains")
+    want_loc = site.get("redirect_to")
     last = ""
     for attempt in range(1, ATTEMPTS + 1):
         try:
-            code, body, ms = probe_once(url)
+            code, body, loc, ms = probe_once(url)
         except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as e:
             last = f"{type(e).__name__}: {str(e)[:90]}"
         else:
+            redirected = 300 <= code < 400
             if code not in expect:
                 last = f"HTTP {code} (expected {'/'.join(str(c) for c in expect)})"
-            elif needle and needle not in body:
+            elif redirected and want_loc and want_loc not in loc:
+                # "expect 302" alone passes on ANY redirect; pin the target.
+                last = f"HTTP {code} redirects to {loc[:60]!r}, wanted {want_loc!r}"
+            elif needle and not redirected and needle not in body:
+                # Only bodies worth reading get needle-checked. A 3xx body is
+                # boilerplate, and an Access-gated site answers 302 off-network
+                # but 200-with-real-content from a bypassed IP — so each check
+                # applies to whichever answer actually arrived.
                 last = f"HTTP {code} but body missing {needle!r}"
             else:
                 extra = f" (attempt {attempt})" if attempt > 1 else ""

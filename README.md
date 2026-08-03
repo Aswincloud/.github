@@ -56,7 +56,12 @@ unhealthy. Stdlib only, no dependencies.
 | `url` | yes | Exact URL to request |
 | `expect` | no | Acceptable status codes, default `[200]` |
 | `contains` | no | Substring that must appear in the body (catches "200 but blank page") |
+| `redirect_to` | no | Substring the `Location` header must contain, when the answer is a 3xx |
 | `note` | no | Why a non-200 is correct, for the next reader |
+
+`contains` is checked only on non-redirect answers and `redirect_to` only on
+redirects, so a site whose healthy answer differs by network can set both and
+have each verified against whichever response actually arrives.
 
 Sites are probed at `/` rather than a health endpoint on purpose: the root is the
 user-visible surface and exercises static-asset serving too, which a Worker-only
@@ -65,13 +70,30 @@ health route does not.
 **`console` expects `302`, and that is correct** — it sits behind Cloudflare
 Access, so a redirect to the login page means it is up. The probe deliberately
 does **not** follow redirects, or that 302 would be invisible. Don't "fix" it
-to 200.
+to 200. `redirect_to` pins *where* it redirects, because "expect 302" on its own
+would pass on any redirect at all.
 
 The homelab services (`truenas`, `watch`, `torrent`) are probed at their real UI
 paths rather than `/`, because the roots redirect. They also use `contains` so a
 reachable-but-broken service is caught: an nginx or reverse-proxy error page
 answering 200 would otherwise read as healthy. `truenas` matches on its `<base>`
 tag because its Angular SPA sends an **empty** `<title>`.
+
+> **`truenas` answers differently depending on who asks.** It is an Access app
+> with a `Bypass Home IP` policy, so from the home network it returns the real UI
+> (`200`), while GitHub's runners get Access's login redirect (`302`). Both are
+> healthy, so both are accepted and each is checked against the answer that
+> arrives. Two consequences worth remembering:
+>
+> - **A local `DRY_RUN` run is not the runner's view.** Running the probe from
+>   home exercises the bypass path only, so a config that is broken for Actions
+>   can still look green locally. That is exactly how the first live run failed
+>   after a clean local check.
+> - **For an Access-gated site, green means Cloudflare's edge is up — not the
+>   origin.** Access redirects before the request ever reaches the box, so an
+>   unplugged NAS still returns a healthy-looking `302`. Real origin monitoring
+>   for the homelab belongs on [status.aswincloud.com](https://status.aswincloud.com),
+>   which probes from inside the network.
 
 **Email is sent on state change only.** An open issue titled `🔴 Site down — <name>`
 is the state store, so a site that stays down gets one email and one issue, with
