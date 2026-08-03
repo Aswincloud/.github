@@ -19,5 +19,24 @@
     "url": "https://console.aswincloud.com",
     "expect": [302],
     "note": "Cloudflare Access login redirect — 302 IS the healthy state here. Do not 'fix' this to 200."
+  },
+
+  {
+    "name": "truenas",
+    "url": "https://truenas.aswincloud.com/ui/",
+    "contains": "<base href=\"/ui/\">",
+    "note": "Homelab NAS. Root 302s to /ui/, so probe /ui/ directly to exercise the real app. The Angular SPA renders an EMPTY <title>, so the <base> tag is the only stable server-sent needle."
+  },
+  {
+    "name": "watch",
+    "url": "https://watch.aswincloud.com/web/",
+    "contains": "Jellyfin",
+    "note": "Homelab Jellyfin. Root 302s to /web/, so probe /web/ directly."
+  },
+  {
+    "name": "torrent",
+    "url": "https://torrent.aswincloud.com",
+    "contains": "qBittorrent",
+    "note": "Homelab qBittorrent. Also watched every 30s by status.aswincloud.com — this is a slower backstop, not the primary monitor."
   }
 ]

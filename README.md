@@ -67,6 +67,12 @@ Access, so a redirect to the login page means it is up. The probe deliberately
 does **not** follow redirects, or that 302 would be invisible. Don't "fix" it
 to 200.
 
+The homelab services (`truenas`, `watch`, `torrent`) are probed at their real UI
+paths rather than `/`, because the roots redirect. They also use `contains` so a
+reachable-but-broken service is caught: an nginx or reverse-proxy error page
+answering 200 would otherwise read as healthy. `truenas` matches on its `<base>`
+tag because its Angular SPA sends an **empty** `<title>`.
+
 **Email is sent on state change only.** An open issue titled `🔴 Site down — <name>`
 is the state store, so a site that stays down gets one email and one issue, with
 later runs adding a comment. Recovery closes the issue and sends one more email.
