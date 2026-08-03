@@ -18,14 +18,17 @@
     "name": "console",
     "url": "https://console.aswincloud.com",
     "expect": [302],
-    "note": "Cloudflare Access login redirect — 302 IS the healthy state here. Do not 'fix' this to 200."
+    "redirect_to": "aswincloud.cloudflareaccess.com",
+    "note": "Cloudflare Access-gated. The 302 to the Access login page IS the healthy state — do not 'fix' this to 200. CAVEAT: Access answers at Cloudflare's EDGE, before the origin, so a green tick here only proves Cloudflare is up, not the app behind it."
   },
 
   {
     "name": "truenas",
     "url": "https://truenas.aswincloud.com/ui/",
+    "expect": [200, 302],
+    "redirect_to": "aswincloud.cloudflareaccess.com",
     "contains": "<base href=\"/ui/\">",
-    "note": "Homelab NAS. Root 302s to /ui/, so probe /ui/ directly to exercise the real app. The Angular SPA renders an EMPTY <title>, so the <base> tag is the only stable server-sent needle."
+    "note": "Homelab NAS behind Cloudflare Access (verified via the Access API: app 'truenas', policies Allow-Domain / Allow-GitHub-Org / Bypass-Home-IP). Answers differ BY NETWORK: from the home IP the bypass applies and the real UI returns 200; from anywhere else — including GitHub runners — Access answers 302 to its login page. Both are healthy, so both are accepted, and each is verified: a 302 must point at the Access login, a 200 must carry the real <base> tag. The Angular SPA sends an EMPTY <title>, so <base> is the only stable needle. CAVEAT: the 302 comes from Cloudflare's EDGE, before the origin, so a runner's green tick does not prove the NAS itself is up."
   },
   {
     "name": "watch",
