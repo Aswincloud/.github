@@ -31,6 +31,61 @@ Welcome to **Aswincloud** – an organization focused on developer tooling, perf
 | [word-game-bot](https://github.com/Aswincloud/word-game-bot) | Telegram word chain game bot (aiogram v3). Fork of jonowo/on9wordchainbot with DB-backed admin & group authorization. | Python | 0 | 2026-07-27 |
 <!-- REPOS_END -->
 
+## 🤖 Org automation
+
+Workflows in this repo that run against the whole org:
+
+| Workflow | Schedule | What it does |
+|---|---|---|
+| [`reconcile-rulesets.yml`](.github/workflows/reconcile-rulesets.yml) | Mondays 06:17 UTC | Reasserts the branch-protection baseline on every public repo |
+| [`security-sweep.yml`](.github/workflows/security-sweep.yml) | Mondays 06:17 UTC | Audits secret scanning + push protection, opens a tracking issue |
+| [`site-probe.yml`](.github/workflows/site-probe.yml) | every 15 min | Checks every hosted site is serving; fails the run and emails if not |
+| [`sync-security-triage.yml`](.github/workflows/sync-security-triage.yml) | every 6 h | Mirrors open security alerts onto the Security Triage board |
+
+### Site uptime probe
+
+[`scripts/probe_sites.py`](scripts/probe_sites.py) requests every site in
+[`scripts/sites.json`](scripts/sites.json) and **fails the run** if any is
+unhealthy. Stdlib only, no dependencies.
+
+**To add or remove a site, edit `scripts/sites.json`** — one object per site:
+
+| Field | Required | Meaning |
+|---|:--:|---|
+| `name` | yes | Short label used in the report and the tracking issue title |
+| `url` | yes | Exact URL to request |
+| `expect` | no | Acceptable status codes, default `[200]` |
+| `contains` | no | Substring that must appear in the body (catches "200 but blank page") |
+| `note` | no | Why a non-200 is correct, for the next reader |
+
+Sites are probed at `/` rather than a health endpoint on purpose: the root is the
+user-visible surface and exercises static-asset serving too, which a Worker-only
+health route does not.
+
+**`console` expects `302`, and that is correct** — it sits behind Cloudflare
+Access, so a redirect to the login page means it is up. The probe deliberately
+does **not** follow redirects, or that 302 would be invisible. Don't "fix" it
+to 200.
+
+**Email is sent on state change only.** An open issue titled `🔴 Site down — <name>`
+is the state store, so a site that stays down gets one email and one issue, with
+later runs adding a comment. Recovery closes the issue and sends one more email.
+A site is only declared down after 3 failed attempts, so a single TCP reset
+doesn't page anyone.
+
+Secrets (all optional — if any is unset the email is skipped with a warning and
+**the run still fails**, so a missing key can never mask an outage):
+`RESEND_API_KEY`, `ALERT_FROM`, `ALERT_TO`.
+
+Run it locally without emailing anyone:
+
+```bash
+DRY_RUN=true python3 scripts/probe_sites.py
+```
+
+Exit codes: `0` all up · `1` something is down · `2` the probe itself couldn't
+run (missing or malformed `sites.json`).
+
 ## 📬 Contact
 
 For questions or contributions, feel free to open an issue in the relevant repository.

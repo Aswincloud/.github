@@ -1,0 +1,23 @@
+[
+  { "name": "portfolio",                "url": "https://www.aswincloud.com" },
+  { "name": "blog",                     "url": "https://blog.aswincloud.com" },
+  { "name": "status",                   "url": "https://status.aswincloud.com" },
+  { "name": "resume",                   "url": "https://resume.aswincloud.com" },
+  { "name": "ttperf",                   "url": "https://ttperf.aswincloud.com" },
+  { "name": "ttnn-ops-coverage",        "url": "https://ttnn-ops-coverage.aswincloud.com" },
+  { "name": "ttnn-eltwise-performance", "url": "https://ttnn-eltwise-performance.aswincloud.com" },
+  { "name": "provision",                "url": "https://provision.aswincloud.com" },
+  { "name": "auth-broker",              "url": "https://auth.aswincloud.com" },
+  { "name": "shiptrack",                "url": "https://shiptrack.aswincloud.com" },
+  { "name": "invoicer",                 "url": "https://invoicer.aswincloud.com" },
+  { "name": "pr-reviewer",              "url": "https://pr-reviewer.aswincloud.com" },
+  { "name": "chat",                     "url": "https://chat.aswincloud.com" },
+  { "name": "support",                  "url": "https://support.aswincloud.com" },
+  { "name": "3d-prints",                "url": "https://3d-prints.aswincloud.com" },
+  {
+    "name": "console",
+    "url": "https://console.aswincloud.com",
+    "expect": [302],
+    "note": "Cloudflare Access login redirect — 302 IS the healthy state here. Do not 'fix' this to 200."
+  }
+]
