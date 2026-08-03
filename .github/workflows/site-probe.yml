@@ -1,0 +1,57 @@
+name: Site uptime probe
+
+# Requests every site listed in scripts/sites.json every ~15 minutes and FAILS
+# THE RUN if any is unhealthy, so a down site shows up red in Actions.
+#
+# Email goes out on STATE CHANGE ONLY — once when a site goes down, once when it
+# recovers. The state store is this repo's own issues (an open "🔴 Site down — x"
+# issue means x was down last run), so a multi-hour outage is two emails rather
+# than one every 15 minutes. Same tracking-issue trick as security-sweep.yml.
+#
+# Auth: plain GITHUB_TOKEN. The probe only needs to read/write issues in THIS
+# repo — no App token, no PAT, unlike the org-wide workflows here.
+#
+# Secrets (all optional; if any is unset the email is skipped with a warning and
+# the run still goes red, so a missing key can never mask an outage):
+#   RESEND_API_KEY  Resend key for the verified aswincloud.com domain
+#   ALERT_FROM      verified sender, e.g. "aswincloud status <status@aswincloud.com>"
+#   ALERT_TO        recipient(s), comma-separated
+#
+# Note: GitHub also emails you about the failed run itself, on EVERY failing run.
+# Turn that off under Settings -> Notifications -> Actions if it gets noisy.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 min; GitHub delays scheduled runs under load
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview only (true) or send email + update issues (false)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: site-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Probe sites
+        env:
+          # Scheduled runs are live; manual runs preview unless you untick the box.
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+        run: python3 scripts/probe_sites.py
