@@ -14,10 +14,10 @@
 | Repository | Description | Language | ⭐ | Updated |
 |------------|-------------|----------|:--:|:-------:|
 | [ttperf](https://github.com/Aswincloud/ttperf) | A streamlined CLI tool for profiling Tenstorrent's TT-Metal tests and extracting device kernel performance metrics | Python | 4 | 2026-07-27 |
-| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-08-20 |
+| [ttnn-performance-dashboard](https://github.com/Aswincloud/ttnn-performance-dashboard) | Day-by-day performance tracking dashboard for Tenstorrent TT-Metal TTNN eltwise operations. | JavaScript | 1 | 2026-08-21 |
 | [portfolio](https://github.com/Aswincloud/portfolio) | Professional portfolio website built with React, Vite, and Tailwind CSS | JavaScript | 1 | 2026-08-19 |
 | [whatsapp_bot](https://github.com/Aswincloud/whatsapp_bot) | WhatsApp AI assistant bot powered by Claude — conversational AI for everyday use | Python | 0 | 2026-08-17 |
-| [3d_printing](https://github.com/Aswincloud/3d_printing) | 3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM | JavaScript | 0 | 2026-08-20 |
+| [3d_printing](https://github.com/Aswincloud/3d_printing) | 3D print portfolio and showcase site — custom figurines, decor, and art pieces. Orders via DM | JavaScript | 0 | 2026-08-21 |
 | [AiBuddy](https://github.com/Aswincloud/AiBuddy) | AI-powered chatbot for Microsoft Teams — brings conversational AI into team channels and group chats | Python | 0 | 2026-07-27 |
 | [auth](https://github.com/Aswincloud/auth) | Shared, framework-agnostic auth primitives for Cloudflare Workers sites — signed sessions, HMAC tokens, PBKDF2 passwords, owner allowlists, OAuth — plus an optional React login UI. Published as @aswincloud/auth. | TypeScript | 0 | 2026-08-03 |
 | [blog](https://github.com/Aswincloud/blog) | blog.aswincloud.com - homelab & home automation | CSS | 0 | 2026-08-17 |
