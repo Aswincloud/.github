@@ -152,14 +152,24 @@ MANAGED_CODEOWNER = {"pull_request": ["required_approving_review_count",
                                       "require_code_owner_review"]}
 
 
+def _actor_key(b):
+    """Canonical bypass-actor identity for comparison.
+
+    GitHub echoes actor_id=null for OrganizationAdmin on READ but requires
+    actor_id=1 on WRITE. Comparing raw makes a correctly-written ruleset look
+    like drift forever, so pin that one actor's id.
+    """
+    t = b.get("actor_type")
+    aid = 1 if t == "OrganizationAdmin" else b.get("actor_id")
+    return "{}:{}:{}".format(t, aid, b.get("bypass_mode"))
+
+
 def norm(rs, managed, bypass=None):
     """Comparable fingerprint of the rules we manage plus the exact bypass list.
     Bypass is compared verbatim (not just 'has an admin') because the whole
     point of the split is WHO is on the codeowner ruleset's bypass list."""
     by = {r["type"]: (r.get("parameters") or {}) for r in rs}
-    actors = sorted("{}:{}:{}".format(b.get("actor_type"), b.get("actor_id"),
-                                      b.get("bypass_mode"))
-                    for b in (bypass or []))
+    actors = sorted(_actor_key(b) for b in (bypass or []))
     return json.dumps({"rules": {t: ({k: by[t].get(k) for k in ks} if t in by else None)
                                  for t, ks in managed.items()},
                        "bypass": actors}, sort_keys=True)
@@ -320,7 +330,8 @@ def main():
     tmpl_co = read_template(TMPL_CODEOWNERS)
     tmpl_caller = read_template(TMPL_CALLER)
 
-    want_base = norm(baseline_rules(), MANAGED_BASELINE, [])
+    want_base = norm(baseline_rules(), MANAGED_BASELINE,
+                     baseline_payload()["bypass_actors"])
     want_co = norm(codeowner_rules(), MANAGED_CODEOWNER,
                    codeowner_payload(team)["bypass_actors"])
 
