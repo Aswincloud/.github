@@ -3,13 +3,20 @@ name: Reconcile org baseline rulesets
 # Weekly self-healing enforcement of TWO branch rulesets across every PUBLIC,
 # active repo in the org:
 #
-#   org-baseline          no bypass. Force-push/deletion block, PR required,
-#                         thread resolution, and the MERGE QUEUE. Binds everyone,
-#                         org owners included.
+#   org-baseline          Force-push/deletion block, PR required, thread
+#                         resolution, and the MERGE QUEUE. Org admins keep a
+#                         break-glass bypass so a bad required check or a jammed
+#                         queue can't permanently lock a repo.
 #   org-codeowner-review  1 approval + code-owner review. Bypassed by
-#                         @<org>/admins, so those members can "Merge when ready"
-#                         without code-owner review while STILL going through the
-#                         queue and required status checks.
+#                         @<org>/admins.
+#
+# NOTE on what bypass does and does not buy you: it lets those members FORCE-MERGE
+# past code-owner review. It does NOT let them add an unreviewed PR to the merge
+# queue — GitHub gates queue entry on the pull request's own state, not on the
+# actor merging, so bypass only ever produces a force-merge (which skips the queue
+# entirely). Verified on live PRs against both require_code_owner_review and a
+# plain required_approving_review_count. For a green "Merge when ready" with no
+# human wait, SATISFY the review via the auto-approve caller instead.
 #
 # The approval/code-owner rules live ONLY in the bypassable ruleset on purpose:
 # rules aggregate to the most restrictive value across all matching rulesets, so

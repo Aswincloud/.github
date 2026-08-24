@@ -5,12 +5,15 @@ CODEOWNERS and auto-approve caller files.
 Two rulesets, deliberately split:
   org-baseline          — block force-push + deletion, require a PR + thread
                           resolution, and the MERGE QUEUE. 0 approvals, no
-                          code-owner gate. No bypass actors: this floor binds
-                          everyone, org owners included.
+                          code-owner gate. Org admins keep a break-glass bypass
+                          so a bad required check can't brick a repo.
   org-codeowner-review  — 1 approval + code-owner review. Bypassable by
-                          @ORG/<BYPASS_TEAM>, so those members can hit
-                          "Merge when ready" without code-owner review while
-                          STILL going through the queue and status checks.
+                          @ORG/<BYPASS_TEAM>. NOTE: bypass lets those members
+                          FORCE-MERGE past code-owner review; it does NOT let
+                          them enqueue an unreviewed PR. GitHub gates merge-queue
+                          entry on the PR's own state, not on the actor. To get a
+                          green "Merge when ready" with no human wait, SATISFY the
+                          review (see the auto-approve caller), don't bypass it.
 
 Why two rulesets and not one: rules from all matching rulesets aggregate to the
 MOST RESTRICTIVE value. If the baseline also asserted require_code_owner_review
@@ -108,12 +111,21 @@ def codeowner_rules():
 
 
 def baseline_payload():
-    # No bypass_actors: the queue + PR requirement bind org owners too. Break-glass
-    # is intentionally NOT granted here — see README. Any richer per-repo ruleset
-    # keeps whatever bypass it defines; this only governs org-baseline.
+    # Break-glass: org admins can bypass, so a misconfigured required check or a
+    # jammed merge queue can never permanently lock a repo.
+    #
+    # This was briefly removed on the theory that binding owners to the queue was
+    # worth losing the escape hatch — the trade being that a bypass team could
+    # still reach the queue via org-codeowner-review. That trade does not exist.
+    # Tested on live PRs: ruleset bypass NEVER grants merge-queue entry, for any
+    # rule or parameter. Queue entry is a function of the pull request's own
+    # state; bypass is a property of the actor merging, and it only ever unlocks
+    # force-merge — which by definition skips the queue. Removing this bought
+    # nothing and left 15 repos with no escape at all. Restored.
     return {"name": BASELINE, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
-            "bypass_actors": [],
+            "bypass_actors": [{"actor_id": 1, "actor_type": "OrganizationAdmin",
+                               "bypass_mode": "always"}],
             "rules": baseline_rules()}
 
 
