@@ -8,12 +8,13 @@ Two rulesets, deliberately split:
                           code-owner gate. Org admins keep a break-glass bypass
                           so a bad required check can't brick a repo.
   org-codeowner-review  — 1 approval + code-owner review. Bypassable by
-                          @ORG/<BYPASS_TEAM>. NOTE: bypass lets those members
-                          FORCE-MERGE past code-owner review; it does NOT let
-                          them enqueue an unreviewed PR. GitHub gates merge-queue
-                          entry on the PR's own state, not on the actor. To get a
-                          green "Merge when ready" with no human wait, SATISFY the
-                          review (see the auto-approve caller), don't bypass it.
+                          @ORG/<BYPASS_TEAM> with bypass_mode "exempt", so the
+                          rule is NOT APPLICABLE to them: their PRs read CLEAN
+                          with zero approvals and take the normal green
+                          "Merge when ready" path through the queue.
+                          Do not change that mode to "always" or
+                          "pull_request" — those only grant a force-merge that
+                          SKIPS the queue. See codeowner_payload().
 
 Why two rulesets and not one: rules from all matching rulesets aggregate to the
 MOST RESTRICTIVE value. If the baseline also asserted require_code_owner_review
@@ -114,14 +115,11 @@ def baseline_payload():
     # Break-glass: org admins can bypass, so a misconfigured required check or a
     # jammed merge queue can never permanently lock a repo.
     #
-    # This was briefly removed on the theory that binding owners to the queue was
-    # worth losing the escape hatch — the trade being that a bypass team could
-    # still reach the queue via org-codeowner-review. That trade does not exist.
-    # Tested on live PRs: ruleset bypass NEVER grants merge-queue entry, for any
-    # rule or parameter. Queue entry is a function of the pull request's own
-    # state; bypass is a property of the actor merging, and it only ever unlocks
-    # force-merge — which by definition skips the queue. Removing this bought
-    # nothing and left 15 repos with no escape at all. Restored.
+    # Kept even though the bypass team now reaches the queue cleanly via
+    # org-codeowner-review's "exempt" actor: that exemption covers the REVIEW
+    # gate only. If a required status check or the queue itself jams, this is
+    # the sole escape hatch, and removing it once already left 15 repos with no
+    # way to merge anything at all.
     return {"name": BASELINE, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
             "bypass_actors": [{"actor_id": 1, "actor_type": "OrganizationAdmin",
@@ -130,12 +128,28 @@ def baseline_payload():
 
 
 def codeowner_payload(team):
+    # bypass_mode MUST be "exempt", not "always" or "pull_request".
+    #
+    # The three modes are not degrees of the same thing:
+    #   always / pull_request -> the actor may OVERRIDE the rule at merge time.
+    #       GitHub offers "merge without waiting for requirements (bypass rules)",
+    #       which merges directly and SKIPS THE MERGE QUEUE. It never lights up
+    #       "Merge when ready", because queue entry is gated on the pull request
+    #       satisfying the rules, and an override is not satisfaction.
+    #   exempt -> the rule is treated as NOT APPLICABLE to the actor. The PR is
+    #       simply CLEAN for them, so the green "Merge when ready" appears and the
+    #       PR goes through the queue like anyone else's.
+    #
+    # Verified on live PRs: always -> BLOCKED, pull_request -> BLOCKED,
+    # exempt -> CLEAN with zero approvals while require_code_owner_review stays on.
+    #
+    # Only the team is listed. OrganizationAdmin is deliberately absent: an
+    # "always" actor here would re-offer the force-merge path, and break-glass
+    # belongs on org-baseline (which owns the queue), not on the review gate.
     return {"name": CODEOWNER_RS, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
             "bypass_actors": [
-                {"actor_id": 1, "actor_type": "OrganizationAdmin",
-                 "bypass_mode": "always"},
-                {"actor_id": team, "actor_type": "Team", "bypass_mode": "always"},
+                {"actor_id": team, "actor_type": "Team", "bypass_mode": "exempt"},
             ],
             "rules": codeowner_rules()}
 
