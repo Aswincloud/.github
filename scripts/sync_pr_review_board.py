@@ -12,6 +12,8 @@ because the default GITHUB_TOKEN cannot write to organization Projects v2.
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.request
 
 ORG = "Aswincloud"
@@ -23,18 +25,44 @@ OPEN_TO_STATUS = "Todo"      # awaiting review
 CLOSED_TO_STATUS = "Done"    # merged or closed
 
 
+# GitHub's GraphQL API intermittently returns 502/503/504 or a generic
+# "Something went wrong while executing your query" error. These are transient,
+# so retry them with backoff instead of failing the whole sync on one hiccup.
+RETRY_HTTP = {502, 503, 504}
+ATTEMPTS = 5
+
+
+def _transient(errors):
+    return any("Something went wrong" in (e.get("message") or "") for e in errors)
+
+
 def gql(query, variables=None):
     body = json.dumps({"query": query, "variables": variables or {}}).encode()
-    req = urllib.request.Request(
-        API, data=body,
-        headers={"Authorization": f"bearer {TOKEN}",
-                 "Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req) as r:
-        out = json.load(r)
-    if "errors" in out:
-        raise SystemExit(f"GraphQL error: {json.dumps(out['errors'], indent=2)}")
-    return out["data"]
+    for attempt in range(1, ATTEMPTS + 1):
+        req = urllib.request.Request(
+            API, data=body,
+            headers={"Authorization": f"bearer {TOKEN}",
+                     "Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                out = json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code in RETRY_HTTP and attempt < ATTEMPTS:
+                time.sleep(2 ** attempt)
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if attempt < ATTEMPTS:
+                time.sleep(2 ** attempt)
+                continue
+            raise
+        if "errors" in out:
+            if _transient(out["errors"]) and attempt < ATTEMPTS:
+                time.sleep(2 ** attempt)
+                continue
+            raise SystemExit(f"GraphQL error: {json.dumps(out['errors'], indent=2)}")
+        return out["data"]
 
 
 def get_project():
