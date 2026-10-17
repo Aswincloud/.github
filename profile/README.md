@@ -30,7 +30,7 @@
 | [keys](https://github.com/Aswincloud/keys) | SSH public keys served from a Cloudflare Worker at keys.aswincloud.com | Shell | 0 | 2026-10-12 |
 | [pr-review-checker](https://github.com/Aswincloud/pr-review-checker) | Web app that analyzes GitHub PRs against CODEOWNERS to compute minimum required approvals, with AI-powered approval predictions from team history | JavaScript | 1 | 2026-10-12 |
 | [resume](https://github.com/Aswincloud/resume) | Aswin — Software Engineer. Resume built from HTML/CSS, auto-rendered to PDF. | HTML | 0 | 2026-10-12 |
-| [shiptrack](https://github.com/Aswincloud/shiptrack) | Free, open-source, self-hostable shipment tracking for Indian & international couriers — built with Next.js + TypeScript | TypeScript | 3 | 2026-10-12 |
+| [shiptrack](https://github.com/Aswincloud/shiptrack) | Free, open-source, self-hostable shipment tracking for Indian & international couriers — built with Next.js + TypeScript | TypeScript | 3 | 2026-10-17 |
 | [slack-join](https://github.com/Aswincloud/slack-join) *(archived)* | – | JavaScript | 0 | 2025-07-15 |
 | [status-page](https://github.com/Aswincloud/status-page) | 🟢 Self-hosted, BetterStack-style live status page for a home network — Cloudflare Worker + D1 + a Docker prober, with email & Slack alerts. Runs on the free tier. | TypeScript | 0 | 2026-10-12 |
 | [tg-torrent](https://github.com/Aswincloud/tg-torrent) | Telegram bot to remotely add torrents to qBittorrent via magnet links or .torrent files | Python | 0 | 2026-10-12 |
