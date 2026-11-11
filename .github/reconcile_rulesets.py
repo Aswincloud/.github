@@ -5,8 +5,9 @@ CODEOWNERS and auto-approve caller files.
 Two rulesets, deliberately split:
   org-baseline          — block force-push + deletion, require a PR + thread
                           resolution, and the MERGE QUEUE. 0 approvals, no
-                          code-owner gate. Org admins keep a break-glass bypass
-                          so a bad required check can't brick a repo.
+                          code-owner gate. Org admins keep a PR-only
+                          break-glass bypass so a bad required check can't
+                          brick a repo, but cannot push directly.
   org-codeowner-review  — 1 approval + code-owner review. Bypassable by
                           @ORG/<BYPASS_TEAM> with bypass_mode "exempt", so the
                           rule is NOT APPLICABLE to them: their PRs read CLEAN
@@ -122,8 +123,13 @@ def baseline_payload():
     # way to merge anything at all.
     return {"name": BASELINE, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+            # "pull_request", not "always": admins can still force-merge a PR
+            # past a jammed check or queue (the break-glass above), but nobody,
+            # admins included, can push or force-push straight to the default
+            # branch. On 2026-11-11 a leaked admin token pushed a credential
+            # stealer directly to main in two repos via the "always" bypass.
             "bypass_actors": [{"actor_id": 1, "actor_type": "OrganizationAdmin",
-                               "bypass_mode": "always"}],
+                               "bypass_mode": "pull_request"}],
             "rules": baseline_rules()}
 
 
