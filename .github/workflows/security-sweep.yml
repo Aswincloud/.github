@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  issues: write   # the built-in token manages the tracking issue in this repo
 
 concurrency:
   group: security-sweep
@@ -21,17 +22,33 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ORG: Aswincloud
-      # PAT with admin:org / security_events / repo scope.
-      # Falls back to GITHUB_TOKEN, which cannot read some org security fields.
-      GH_TOKEN: ${{ secrets.ORG_SECURITY_TOKEN || secrets.GITHUB_TOKEN }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
+      # Short-lived (1 h) aswincloud-bot App token for the org-wide READS
+      # (secret-scanning settings and alerts need admin-level access). It
+      # replaces ORG_SECURITY_TOKEN, a personal token revoked on 2026-11-11.
+      # The tracking issue in this repo is managed with the built-in
+      # GITHUB_TOKEN instead, so the App needs no Issues permission.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-administration: read
+          permission-metadata: read
+          permission-secret-scanning-alerts: read
+
       - name: Run sweep
         shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           echo "## 🔒 Org security sweep — $(date -u '+%Y-%m-%d %H:%M UTC')" > report.md
@@ -74,9 +91,12 @@ jobs:
             fi
           }
 
-          emit "Secret scanning OFF"    "${scan_off[@]:-}"
-          emit "Push protection OFF"    "${push_off[@]:-}"
-          emit "Open secret alerts"     "${open_alerts[@]:-}"
+          # "${arr[@]}" (bash >= 4.4) expands an empty array to zero words even
+          # under set -u. The old "${arr[@]:-}" produced one empty word, so every
+          # section was reported with a blank bullet when nothing was wrong.
+          emit "Secret scanning OFF"    "${scan_off[@]}"
+          emit "Push protection OFF"    "${push_off[@]}"
+          emit "Open secret alerts"     "${open_alerts[@]}"
 
           if [ "$problems" -eq 0 ]; then
             echo "✅ All public repos have secret scanning + push protection on, and no open alerts." >> report.md
@@ -85,23 +105,23 @@ jobs:
           cat report.md
 
           TITLE="🔒 Org security sweep — action needed"
-          existing=$(gh issue list --repo "$ORG/.github" --state open \
+          existing=$(GH_TOKEN="$ISSUE_TOKEN" gh issue list --repo "$ORG/.github" --state open \
             --search "$TITLE in:title" --json number --jq '.[0].number // empty' 2>/dev/null || true)
 
           if [ "$problems" -gt 0 ]; then
             if [ -n "$existing" ]; then
-              gh issue comment "$existing" --repo "$ORG/.github" --body-file report.md
+              GH_TOKEN="$ISSUE_TOKEN" gh issue comment "$existing" --repo "$ORG/.github" --body-file report.md
             else
-              gh issue create --repo "$ORG/.github" --title "$TITLE" \
+              GH_TOKEN="$ISSUE_TOKEN" gh issue create --repo "$ORG/.github" --title "$TITLE" \
                 --body-file report.md --label security 2>/dev/null \
-              || gh issue create --repo "$ORG/.github" --title "$TITLE" --body-file report.md
+              || GH_TOKEN="$ISSUE_TOKEN" gh issue create --repo "$ORG/.github" --title "$TITLE" --body-file report.md
             fi
             echo "::warning::Security sweep found $problems category(ies) needing attention."
           else
             # All clear — close any stale open issue.
             if [ -n "$existing" ]; then
-              gh issue comment "$existing" --repo "$ORG/.github" --body "✅ Latest sweep is clean — closing." || true
-              gh issue close "$existing" --repo "$ORG/.github" || true
+              GH_TOKEN="$ISSUE_TOKEN" gh issue comment "$existing" --repo "$ORG/.github" --body "✅ Latest sweep is clean — closing." || true
+              GH_TOKEN="$ISSUE_TOKEN" gh issue close "$existing" --repo "$ORG/.github" || true
             fi
             echo "All clear."
           fi
