@@ -44,41 +44,30 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
         run: python3 scripts/update_readme.py
 
-      - name: Open PR + approve + auto-merge
+      - name: Commit README refresh straight to main
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}       # App = PR author
-          APPROVE_TOKEN: ${{ secrets.WRITE_ACCESS_PAT }} # real user = approver
-          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
           set -euo pipefail
-
           if git diff --quiet -- README.md profile/README.md; then
             echo "README already up to date — nothing to do."
             exit 0
           fi
-
-          BRANCH="chore/update-readme-${GITHUB_RUN_ID}"
+          # Guard: the App may bypass main's rulesets on this repo (see
+          # reconcile_rulesets.py README_APP_ID and the hand-made "main"
+          # ruleset), so refuse to push anything beyond the two README files.
+          changed="$(git status --porcelain | awk '{print $2}' | sort -u)"
+          unexpected="$(printf '%s\n' "$changed" | grep -vxE 'README\.md|profile/README\.md' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "::error::Refusing to push: unexpected changes outside the README files:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
           git config user.name  "aswincloud-bot[bot]"
           git config user.email "aswincloud-bot[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
           git add README.md profile/README.md
           git commit -m "chore: auto-update public repository list"
-          # origin is already authed with the app token via checkout above.
-          git push origin "$BRANCH"
-
-          PR_URL="$(gh pr create --repo "$REPO" --base main --head "$BRANCH" \
-            --title "chore: auto-update public repository list" \
-            --body "Automated README refresh. Opened by the scheduled Update README workflow; approved and set to auto-merge.")"
-          echo "Opened $PR_URL"
-          PR_NUM="${PR_URL##*/}"
-
-          # Approve as a DIFFERENT real write-user so it counts toward required
-          # review + code-owner review (the App can't approve, nor its own PR).
-          GH_TOKEN="${APPROVE_TOKEN}" gh pr review "$PR_NUM" --repo "$REPO" --approve \
-            --body "Auto-approved: automated README update."
-
-          # Repo has a merge queue: the queue applies its own merge method
-          # (SQUASH) and deletes the branch. --squash/--delete-branch are
-          # rejected under a queue, so --auto alone enqueues the PR.
-          gh pr merge "$PR_NUM" --repo "$REPO" --auto
-          echo "Auto-merge enabled on PR #${PR_NUM}."
+          # origin is already authed with the 1-hour App token via checkout above.
+          # A concurrent push to main makes this fail; the next daily run retries.
+          git push origin HEAD:main
+          echo "Pushed README refresh to main."

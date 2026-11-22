@@ -54,6 +54,10 @@ CODEOWNER_RS = "org-codeowner-review"
 # Members of this team bypass org-codeowner-review (and only that ruleset).
 BYPASS_TEAM = os.environ.get("BYPASS_TEAM", "admins")
 SELF = ".github"  # this repo hosts templates + the reusable workflow
+# aswincloud-bot GitHub App. Bypasses org-baseline on SELF only, so the daily
+# Update README workflow can push its README refresh straight to main with a
+# 1-hour App token instead of opening a PR approved by a personal token.
+README_APP_ID = int(os.environ.get("README_APP_ID", "1597322"))
 
 CODEOWNERS_PATHS = [".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS"]
 CALLER_PATH = ".github/workflows/auto-approve.yml"
@@ -111,7 +115,7 @@ def codeowner_rules():
     }}]
 
 
-def baseline_payload():
+def baseline_payload(repo=None):
     # Break-glass: org admins can bypass, so a misconfigured required check or a
     # jammed merge queue can never permanently lock a repo.
     #
@@ -123,7 +127,9 @@ def baseline_payload():
     return {"name": BASELINE, "target": "branch", "enforcement": "active",
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
             "bypass_actors": [{"actor_id": 1, "actor_type": "OrganizationAdmin",
-                               "bypass_mode": "always"}],
+                               "bypass_mode": "always"}]
+                             + ([{"actor_id": README_APP_ID, "actor_type": "Integration",
+                                  "bypass_mode": "always"}] if repo == SELF else []),
             "rules": baseline_rules()}
 
 
@@ -389,6 +395,8 @@ def main():
         # Step 2: baseline always; codeowner ruleset only once the auto-approver
         # exists (otherwise a non-bypass member's PR could never be approved).
         target_review = caller_ok and co_ok
+        want_base = norm(baseline_rules(), MANAGED_BASELINE,
+                         baseline_payload(name)["bypass_actors"])
         was_base = base is not None and \
             norm(base.get("rules", []), MANAGED_BASELINE, base.get("bypass_actors")) == want_base \
             and base.get("enforcement") == "active"
@@ -398,7 +406,7 @@ def main():
 
         problem = None
         if not was_base:
-            problem = put_ruleset(name, base, baseline_payload())
+            problem = put_ruleset(name, base, baseline_payload(name))
         if not problem:
             if target_review and not was_co:
                 problem = put_ruleset(name, cors, codeowner_payload(team))
