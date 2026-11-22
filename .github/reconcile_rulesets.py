@@ -133,7 +133,7 @@ def baseline_payload(repo=None):
             "rules": baseline_rules()}
 
 
-def codeowner_payload(team):
+def codeowner_payload(team, repo=None):
     # bypass_mode MUST be "exempt", not "always" or "pull_request".
     #
     # The three modes are not degrees of the same thing:
@@ -156,6 +156,11 @@ def codeowner_payload(team):
             "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
             "bypass_actors": [
                 {"actor_id": team, "actor_type": "Team", "bypass_mode": "exempt"},
+                # Its pull_request rule also blocks direct pushes, so the App
+                # needs a bypass here too on SELF (see README_APP_ID). "always",
+                # not "exempt": it pushes, it doesn't merge reviewed PRs.
+                *([{"actor_id": README_APP_ID, "actor_type": "Integration",
+                    "bypass_mode": "always"}] if repo == SELF else []),
             ],
             "rules": codeowner_rules()}
 
@@ -352,8 +357,7 @@ def main():
 
     want_base = norm(baseline_rules(), MANAGED_BASELINE,
                      baseline_payload()["bypass_actors"])
-    want_co = norm(codeowner_rules(), MANAGED_CODEOWNER,
-                   codeowner_payload(team)["bypass_actors"])
+
 
     rows = []
     c = {"review": 0, "floor": 0, "in_sync": 0, "skip": 0, "blocked": 0, "error": 0}
@@ -400,6 +404,8 @@ def main():
         was_base = base is not None and \
             norm(base.get("rules", []), MANAGED_BASELINE, base.get("bypass_actors")) == want_base \
             and base.get("enforcement") == "active"
+        want_co = norm(codeowner_rules(), MANAGED_CODEOWNER,
+                       codeowner_payload(team, name)["bypass_actors"])
         was_co = cors is not None and \
             norm(cors.get("rules", []), MANAGED_CODEOWNER, cors.get("bypass_actors")) == want_co \
             and cors.get("enforcement") == "active"
@@ -409,7 +415,7 @@ def main():
             problem = put_ruleset(name, base, baseline_payload(name))
         if not problem:
             if target_review and not was_co:
-                problem = put_ruleset(name, cors, codeowner_payload(team))
+                problem = put_ruleset(name, cors, codeowner_payload(team, name))
             elif not target_review and cors is not None:
                 problem = delete_ruleset(name, cors)
 
