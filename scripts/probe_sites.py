@@ -19,8 +19,8 @@ because not every healthy site returns 200: console.aswincloud.com sits behind
 Cloudflare Access and answers 302 to its login page. Redirects are deliberately
 NOT followed, or that 302 would be invisible.
 
-Access-gated sites also support `redirect_to`, a substring the Location header
-must contain when the answer IS a redirect. Without it, "expect 302" passes on
+Access-gated sites also support `redirect_to`, the exact hostname the Location header
+must point at when the answer IS a redirect. Without it, "expect 302" passes on
 ANY redirect — including a misconfigured one pointing somewhere else entirely.
 Read the caveat on `redirect_to` in sites.json before trusting a gated site's
 green tick: Access answers at Cloudflare's edge, so a gated probe proves the
@@ -48,6 +48,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
@@ -117,8 +118,10 @@ def probe(site):
             redirected = 300 <= code < 400
             if code not in expect:
                 last = f"HTTP {code} (expected {'/'.join(str(c) for c in expect)})"
-            elif redirected and want_loc and want_loc not in loc:
-                # "expect 302" alone passes on ANY redirect; pin the target.
+            elif redirected and want_loc and urllib.parse.urlsplit(loc).hostname != want_loc:
+                # "expect 302" alone passes on ANY redirect; pin the target host
+                # exactly. A substring test would also pass a redirect to
+                # https://evil.example/?next=<want_loc>.
                 last = f"HTTP {code} redirects to {loc[:60]!r}, wanted {want_loc!r}"
             elif needle and not redirected and needle not in body:
                 # Only bodies worth reading get needle-checked. A 3xx body is
