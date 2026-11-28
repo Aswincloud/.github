@@ -39,7 +39,9 @@
   {
     "name": "torrent",
     "url": "https://torrent.aswincloud.com",
+    "expect": [200, 302],
+    "redirect_to": "aswincloud.cloudflareaccess.com",
     "contains": "qBittorrent",
-    "note": "Homelab qBittorrent. Also watched every 30s by status.aswincloud.com — this is a slower backstop, not the primary monitor."
+    "note": "Homelab qBittorrent, behind Cloudflare Access since 2026-11-27 (app 'qBittorrent (torrent)': Bypass-Home-IP, tg-torrent bot service token, Owner). Same split as truenas: from the home IP the bypass applies and the WebUI returns 200 with 'qBittorrent' in it; from GitHub runners Access answers 302 to its login page. Both are healthy and each is verified. CAVEAT: the runner's 302 comes from Cloudflare's EDGE, so it does not prove qBittorrent itself is up. Also watched every 30s by status.aswincloud.com."
   }
 ]
